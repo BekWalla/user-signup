@@ -16,6 +16,7 @@
 #
 import webapp2
 import cgi
+import re
 
 page_header = """
 <!DOCTYPE html>
@@ -40,34 +41,73 @@ page_footer = """
 </html>
 """
 
-def build_page(textarea_content):
-    username_label= "<label>User Name:</label>"
-    username_input = "<input type = 'message' name='username'/>"
-
-    password_label= "<label>Password:</label>"
-    password_input = "<input type = 'message' name='password'/>"
-
-    repeatpw_label= "<label>Verify password:</label>"
-    repeatpw_input = "<input type = 'message' name='repeatpw'/>"
-
-    email_label= "<label>Email (Optional):</label>"
-    email_input = "<input type = 'message' name='email'/>"
-
-    submit = "<input type = 'submit'/>"
-    form = "<form method = 'post'>" + username_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;" + username_input +"<br>"+ password_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;"  + password_input + "<br>"+ repeatpw_label + "&nbsp;&nbsp;" + repeatpw_input + "<br>" + email_label + "&nbsp;" + email_input + "<br>" + submit + "</form>"
-
-    header = "<h2>User Sign Up</h2>"
-    return header + form
-
+def  valid_username (username)
+    USER_RE = re.compile("^[a-zA-Z0-9_-]{3,20}$")
+    return USER_RE.match(username)
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
-        content = build_page("")
-        self.response.write(content)
+        username_label= "<label>User Name:</label>"
+        username_input = "<input type = 'message' name='username'/>"
+
+        password_label= "<label>Password:</label>"
+        password_input = "<input type = 'password' name='password'/>"
+
+        repeatpw_label= "<label>Verify password:</label>"
+        repeatpw_input = "<input type = 'password' name='repeatpw'/>"
+
+        email_label= "<label>Email (Optional):</label>"
+        email_input = "<input type = 'message' name='email'/>"
+
+        submit = "<input type = 'submit'/>"
+        clean_form = "<form method = 'get'>" + username_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;" + username_input +"<br>"+ password_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;"  + password_input + "<br>"+ repeatpw_label + "&nbsp;&nbsp;" + repeatpw_input + "<br>" + email_label + "&nbsp;" + email_input + "<br>" + submit + "</form>"
+
+        header = "<h2>User Sign Up</h2>"
+        return header + form
+    self.response.write(content)
 
     def post(self):
-        content = build_page("")
-        self.response.write(content)
+            # look inside the request to figure out what the user typed
+        user_name = self.request.get("username")
+        escaped_user_name = cgi.escape(user_name)
+
+        password = self.request.get("password")
+        repeatpw = self.request.get("repeatpw")
+
+        email = self.request.get("email")
+        escaped_email = cgi.escape(email)
+
+
+        if escaped_user_name == "":
+            nousername_error =  "Please enter a username."
+            nousername_form = "<form method = 'post'>" + username_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;" + escaped_user_name + nousername_error +"<br>"+ password_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;"  + password_input + "<br>"+ repeatpw_label + "&nbsp;&nbsp;" + repeatpw_input + "<br>" + email_label + "&nbsp;" + escaped_email + "<br>" + submit + "</form>"
+            return nousername_form
+
+        elif valid_username(escaped_user_name)=="":
+            invalid_username_error = "Please enter a username using only alphanumerics."
+            invalid_username_form = "<form method = 'post'>" + username_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;" + escaped_user_name + invalid_username_error +"<br>"+ password_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;"  + password_input + "<br>"+ repeatpw_label + "&nbsp;&nbsp;" + repeatpw_input + "<br>" + email_label + "&nbsp;" + escaped_email + "<br>" + submit + "</form>"
+            return invalid_username_form
+
+        elif valid_email (escaped_email) =="":
+            invalid_email_error = "Please enter an email using only alphanumerics."
+            invalid_email_form = "<form method = 'post'>" + username_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;" + escaped_user_name +"<br>"+ password_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;"  + password_input + "<br>"+ repeatpw_label + "&nbsp;&nbsp;" + repeatpw_input + "<br>" + email_label + "&nbsp;" + escaped_email + invalid_email_error + "<br>" + submit + "</form>"
+            return invalid_email_form
+
+        elif repeatpw != password:
+            password_match_error = "Your passwords do not match."
+            password_mismatch_form = "<form method = 'post'>" + username_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;" + escaped_user_name +"<br>"+ password_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;"  + password_input + "<br>"+ repeatpw_label + "&nbsp;&nbsp;" + repeatpw_input + "<br>" + email_label + "&nbsp;" + escaped_email + invalid_email_error + "<br>" + submit + "</form>"
+            return password_mismatch_form
+
+        elif password == ""
+            no_password_error = "Your passwords do not match."
+            no_password_form = "<form method = 'post'>" + username_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;" + escaped_user_name +"<br>"+ password_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;"  + password_input + "<br>"+ repeatpw_label + "&nbsp;&nbsp;" + repeatpw_input + "<br>" + email_label + "&nbsp;" + escaped_email + invalid_email_error + "<br>" + submit + "</form>"
+            return no_password_form
+
+        else:
+            return "Welcome, " + escaped_user_name
+
+    self.response.write(content)
+
 
 app = webapp2.WSGIApplication([
     ('/', MainHandler)
