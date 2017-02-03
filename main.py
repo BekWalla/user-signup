@@ -41,11 +41,12 @@ page_footer = """
 </html>
 """
 
+
 def build_page(textarea_content):
     username_label= "<label>User Name:</label>"
     username_input = "<input type = 'text' name='username'/>"
     username_chunk = username_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;" + username_input
-    username_error = "<text-style = 'color:red'> Please input a valid username.</text>"
+    username_error_element = ""
 
     password_label= "<label>Password:</label>"
     password_input = "<input type = 'password' name='password'/>"
@@ -54,22 +55,19 @@ def build_page(textarea_content):
     repeatpw_label= "<label>Verify password:</label>"
     repeatpw_input = "<input type = 'password' name='repeatpw'/>"
     repeatpw_chunk = repeatpw_label + "&nbsp;&nbsp;" + repeatpw_input
-    password_error: "<text-style = 'color:red'> Your passwords do not match.</text>"
+    password_error_element = ""
 
     email_label= "<label>Email (Optional):</label>"
     email_input = "<input type = 'email' name='email'/>"
     email_chunk = email_label + "&nbsp;" + email_input
-    email_error = "<text-style = 'color:red'> Please input a valid email.</text>"
+    email_error_element = ""
 
-    submit = "<input type = 'submit'/>""<br>"+
+    submit = "<input type = 'submit'/>" "<br>"
 
-    clean_form = "<form method = 'post'>" + username_chunk + "<br>" + password_chunk + "<br>" + repeatpw_chunk + "<br>" + email_chunk + "<br>"+ submit + "</form>"
-    username_error_form = "<form method = 'post'>" + username_label + "&nbsp; &nbsp; &nbsp; &nbsp;&nbsp; &nbsp;" + username_input + username + username_error "<br>" + password_chunk + "<br>" + repeatpw_chunk + "<br>" + email_chunk + "<br>"+ submit + "</form>"
-    password_mismatch_form = "<form method = 'post'>" + username_chunk + "<br>" + password_chunk + "<br>" + repeatpw_chunk + password_error + "<br>" + email_chunk + "<br>"+ submit + "</form>"
-    invalid_email_form= "<form method = 'post'>" + username_chunk + "<br>" + password_chunk + "<br>" + repeatpw_chunk + "<br>" + email_label + "&nbsp;" + email_input + email + email_error + "<br>"+ submit + "</form>"
+    form = "<form method = 'post'>" + username_chunk + username_error_element + "<br>" + password_chunk + "<br>" + repeatpw_chunk + password_error_element + "<br>" + email_chunk + email_error_element + "<br>"+ submit + "</form>"
 
     header = "<h2>User Sign Up</h2>"
-    return header + clean_form
+    return header + form
 
 def valid_username(username):
     USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
@@ -88,36 +86,40 @@ class MainHandler(webapp2.RequestHandler):
         content = build_page("")
         self.response.write(content)
 
+        error = self.request.get("error")
+        error_element = "<p class='error'>" + error + "</p>" if error else ""
+
+
     def post(self):
         content = build_page("")
         self.response.write(content)
 
-class Form_Submitted(webapp2.RequestHandler):
-    """ Handles requests coming in to '/submit'
-        e.g. www.usersignup.com/submit
-    """
-
-    def post(self):
         username = self.request.get("username")
         escaped_user_name = cgi.escape(username)
-        valid_username = valid_username(escaped_user_name)
-        if valid_username == "":
-            return header + username_error_form
+
+        if valid_username(escaped_user_name) == "":
+            username_error = "<text> Please input a valid username </text>"
+            self.redirect("/?error=" + username_error)
 
         password = self.request.get("password")
         repeatpw = self.request.get("repeatpw")
-        elif password != repeatpw:
-            return header + password_mismatch_form
+
+        if password != repeatpw:
+            password_error = "<text> Your passwords do not match. </text>"
+            self.redirect("/?error=" + password_error)
 
         email = self.request.get("email")
-        elif email != "":
-            and if valid_email(email)=="":
-                return header + invalid_email_form
+        if email != "":
+            if valid_email(email)=="":
+                email_error = "<text> Please input a valid email </text>"
+                self.redirect("/?error=" + email_error)
 
         else:
-            return "<h2> Welcome  + valid_username + ! </h2>"
+            sentence = "<h2> Welcome  " + escaped_user_name + "! </h2>"
+            content = page_header + "<p>" + sentence + "</p>"
+            self.response.write(content)
+
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler),
-    ("/submit", Form_Submitted),
+    ('/', MainHandler)
 ], debug=True)
