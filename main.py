@@ -86,40 +86,44 @@ class MainHandler(webapp2.RequestHandler):
         content = build_page("")
         self.response.write(content)
 
-        error = self.request.get("error")
-        error_element = "<p class='error'>" + error + "</p>" if error else ""
-
 
     def post(self):
-        content = build_page("")
-        self.response.write(content)
-
+        content = ("")
         username = self.request.get("username")
         escaped_user_name = cgi.escape(username)
-
-        if valid_username(escaped_user_name) == "":
-            username_error = "<text> Please input a valid username </text>"
-            self.redirect("/?error=" + username_error)
-
         password = self.request.get("password")
         repeatpw = self.request.get("repeatpw")
-
-        if password != repeatpw:
-            password_error = "<text> Your passwords do not match. </text>"
-            self.redirect("/?error=" + password_error)
-
         email = self.request.get("email")
-        if email != "":
-            if valid_email(email)=="":
-                email_error = "<text> Please input a valid email </text>"
-                self.redirect("/?error=" + email_error)
 
-        else:
-            sentence = "<h2> Welcome  " + escaped_user_name + "! </h2>"
-            content = page_header + "<p>" + sentence + "</p>"
+        if valid_username(username) == "":
+            username_error = "<p class = 'error'> Please input a valid username </p>"
+            content = content + build_page("") + username_error
             self.response.write(content)
+        else:
+            if escaped_user_name == "":
+                username_error = "<p class = 'error'> Please input a valid username </p>"
+                content = content + build_page("") + username_error
+                self.response.write(content)
+            else:
+                if password != repeatpw:
+                    password_error = "<p class = 'error'> Please enter matching passwords. </error>"
+                    content = content + build_page("") + password_error
+                    self.response.write(content)
+                else:
+                    if email != "":
+                        if valid_email(email)=="":
+                            email_error = "<p class = 'error'> Please input a valid email </error>"
+                            content = content + build_page("") + email_error
+                            self.response.write(content)
+
+                        else:
+                            sentence = "<h2> Welcome  " + escaped_user_name + "! </h2>"
+                            content = page_header + "<p>" + sentence + "</p>"
+                            self.response.write(content)
+
+
 
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
 ], debug=True)
